@@ -22,7 +22,6 @@ import os
 import sys
 import traceback
 import cPickle as pickle
-import logging
 
 
 def start_engine(data):
@@ -34,6 +33,8 @@ def start_engine(data):
 
     # make sure we don't inherit the GUI's pipeline configuration
     os.environ["TANK_CURRENT_PC"] = data["config_path"]
+
+    os.environ["SHOTGUN_PIPELINE_CONFIGURATION_ID"] = str(data["pc_id"])
 
     import sgtk
     sgtk.util.append_path_to_env_var("PYTHONPATH", data["core_python_path"])

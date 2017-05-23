@@ -17,6 +17,7 @@ import subprocess
 import cPickle as pickle
 import pprint
 import itertools
+import functools
 import urlparse
 from collections import OrderedDict
 
@@ -1066,7 +1067,9 @@ class DesktopWindow(SystrayWindow):
         self._sync_thread.report_progress.connect(
             lambda pct, msg: self.project_overlay.report_progress(pct * self._BOOTSTRAP_END_RATIO, msg)
         )
-        self._sync_thread.sync_success.connect(self._sync_success)
+        self._sync_thread.sync_success.connect(
+            functools.partial(self._sync_success, pipeline_configuration_to_load)
+        )
         self._sync_thread.start()
 
     def _pick_pipeline_configuration(self, pipeline_configurations, requested_pipeline_configuration_id, project):
@@ -1111,7 +1114,7 @@ class DesktopWindow(SystrayWindow):
                    "\n\nFor more details, see the console." % message)
         self.project_overlay.show_error_message(message)
 
-    def _sync_success(self, config_path, descriptor):
+    def _sync_success(self, pipeline_config, config_path, descriptor):
         try:
             self._current_pipeline_descriptor = descriptor
             # Banners might need to be updated, we might have picked a configuration that has been
@@ -1135,7 +1138,8 @@ class DesktopWindow(SystrayWindow):
                 "proxy_data": {
                     "proxy_pipe": engine.site_comm.server_pipe,
                     "proxy_auth": engine.site_comm.server_authkey
-                }
+                },
+                "pc_id": pipeline_config["id"]
             }
             (_, pickle_data_file) = tempfile.mkstemp(suffix='.pkl')
             pickle.dump(desktop_data, open(pickle_data_file, "wb"))
